@@ -90,11 +90,10 @@ public:
   /**
    * @brief Replace current BT with another one
    * @param bt_xml_filename The file containing the new BT, uses default filename if empty
-   * @param overwrite If true, the new BT will be reloaded even if the filename is the same
    * @return bool true if the resulting BT correspond to the one in bt_xml_filename. false
    * if something went wrong, and previous BT is maintained
    */
-  bool loadBehaviorTree(const std::string & bt_xml_filename = "", bool overwrite = false);
+  bool loadBehaviorTree(const std::string & bt_xml_filename = "");
 
   /**
    * @brief Getter function for BT Blackboard
@@ -232,6 +231,9 @@ protected:
 
   // Default timeout value while waiting for response from a server
   std::chrono::milliseconds default_server_timeout_;
+
+  // should the BT be reloaded even if the same xml filename is requested?
+  bool overwrite_xml_ = false;
 
   // User-provided callbacks
   OnGoalReceivedCallback on_goal_received_callback_;
