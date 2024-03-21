@@ -62,6 +62,7 @@ public:
     server_timeout_ =
       config().blackboard->template get<std::chrono::milliseconds>("server_timeout");
     getInput<std::chrono::milliseconds>("server_timeout", server_timeout_);
+    getInput<std::chrono::milliseconds>("server_discovery_timeout", server_discovery_timeout_);
 
     // Now that we have node_ to use, create the service client for this BT service
     getInput("service_name", service_name_);
@@ -77,10 +78,10 @@ public:
     RCLCPP_DEBUG(
       node_->get_logger(), "Waiting for \"%s\" service",
       service_name_.c_str());
-    if (!service_client_->wait_for_service(1s)) {
+    if (!service_client_->wait_for_service(server_discovery_timeout_)) {
       RCLCPP_ERROR(
-        node_->get_logger(), "\"%s\" service server not available after waiting for 1 s",
-        service_node_name.c_str());
+        node_->get_logger(), "\"%s\" service server not available after waiting for %ld s",
+        service_node_name.c_str(), server_discovery_timeout_.count());
       throw std::runtime_error(
               std::string(
                 "Service server %s not available",
@@ -108,7 +109,12 @@ public:
   {
     BT::PortsList basic = {
       BT::InputPort<std::string>("service_name", "please_set_service_name_in_BT_Node"),
-      BT::InputPort<std::chrono::milliseconds>("server_timeout")
+      BT::InputPort<std::chrono::milliseconds>(
+        "server_timeout",
+        "Timeout for service result in ms"),
+      BT::InputPort<std::chrono::milliseconds>(
+        "server_discovery_timeout", std::chrono::milliseconds(1000),
+        "Timeout for discovering the service in ms")
     };
     basic.insert(addition.begin(), addition.end());
 
@@ -245,6 +251,8 @@ protected:
   // The timeout value while to use in the tick loop while waiting for
   // a result from the server
   std::chrono::milliseconds server_timeout_;
+  // The Timeout for waiting for the service to discover
+  std::chrono::milliseconds server_discovery_timeout_;
 
   // The timeout value for BT loop execution
   std::chrono::milliseconds bt_loop_duration_;

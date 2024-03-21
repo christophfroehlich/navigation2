@@ -111,6 +111,18 @@ inline std::chrono::milliseconds convertFromString<std::chrono::milliseconds>(co
   return std::chrono::milliseconds(std::stoul(key.data()));
 }
 
+/**
+ * @brief Return std::string from std::chrono::milliseconds
+ * @param std::chrono::milliseconds
+ * @return std::string representing ms
+ */
+
+template<>
+std::string toStr(std::chrono::milliseconds value)
+{
+  return std::to_string(value.count());
+}
+
 }  // namespace BT
 
 #endif  // NAV2_BEHAVIOR_TREE__BT_CONVERSIONS_HPP_
