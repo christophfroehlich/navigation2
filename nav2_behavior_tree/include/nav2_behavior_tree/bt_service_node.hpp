@@ -57,12 +57,15 @@ public:
     callback_group_executor_.add_callback_group(callback_group_, node_->get_node_base_interface());
 
     // Get the required items from the blackboard
-    bt_loop_duration_ =
+    max_timeout_ =
       config().blackboard->template get<std::chrono::milliseconds>("bt_loop_duration");
     server_timeout_ =
       config().blackboard->template get<std::chrono::milliseconds>("server_timeout");
     getInput<std::chrono::milliseconds>("server_timeout", server_timeout_);
     getInput<std::chrono::milliseconds>("server_discovery_timeout", server_discovery_timeout_);
+
+    // timeout should be less than bt_loop_duration to be able to finish the current tick
+    max_timeout_ *= 0.5;
 
     // Now that we have node_ to use, create the service client for this BT service
     getInput("service_name", service_name_);
@@ -193,7 +196,7 @@ public:
     auto remaining = server_timeout_ - elapsed;
 
     if (remaining > std::chrono::milliseconds(0)) {
-      auto timeout = remaining > bt_loop_duration_ ? bt_loop_duration_ : remaining;
+      auto timeout = remaining > max_timeout_ * 0.5 ? max_timeout_ * 0.5 : remaining;
 
       rclcpp::FutureReturnCode rc;
       rc = callback_group_executor_.spin_until_future_complete(future_result_, timeout);
@@ -255,7 +258,7 @@ protected:
   std::chrono::milliseconds server_discovery_timeout_;
 
   // The timeout value for BT loop execution
-  std::chrono::milliseconds bt_loop_duration_;
+  std::chrono::milliseconds max_timeout_;
 
   // To track the server response when a new request is sent
   std::shared_future<typename ServiceT::Response::SharedPtr> future_result_;
