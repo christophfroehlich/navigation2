@@ -107,11 +107,15 @@ bool BtActionServer<ActionT>::on_configure()
     action_name_, std::bind(&BtActionServer<ActionT>::executeCallback, this));
 
   // Get parameters for BT timeouts
-  int timeout;
-  node->get_parameter("bt_loop_duration", timeout);
-  bt_loop_duration_ = std::chrono::milliseconds(timeout);
-  node->get_parameter("default_server_timeout", timeout);
-  default_server_timeout_ = std::chrono::milliseconds(timeout);
+  int bt_loop_duration;
+  node->get_parameter("bt_loop_duration", bt_loop_duration);
+  bt_loop_duration_ = std::chrono::milliseconds(bt_loop_duration);
+  int default_server_timeout;
+  node->get_parameter("default_server_timeout", default_server_timeout);
+  default_server_timeout_ = std::chrono::milliseconds(default_server_timeout);
+  int wait_for_service_timeout;
+  node->get_parameter("wait_for_service_timeout", wait_for_service_timeout);
+  wait_for_service_timeout_ = std::chrono::milliseconds(wait_for_service_timeout);
 
   // Create the class that registers our custom nodes and executes the BT
   bt_ = std::make_unique<nav2_behavior_tree::BehaviorTreeEngine>(plugin_lib_names_);
@@ -123,6 +127,9 @@ bool BtActionServer<ActionT>::on_configure()
   blackboard_->set<rclcpp::Node::SharedPtr>("node", client_node_);  // NOLINT
   blackboard_->set<std::chrono::milliseconds>("server_timeout", default_server_timeout_);  // NOLINT
   blackboard_->set<std::chrono::milliseconds>("bt_loop_duration", bt_loop_duration_);  // NOLINT
+  blackboard_->set<std::chrono::milliseconds>(
+    "wait_for_service_timeout",
+    wait_for_service_timeout_);
 
   return true;
 }
@@ -190,6 +197,9 @@ bool BtActionServer<ActionT>::loadBehaviorTree(const std::string & bt_xml_filena
       blackboard->set<rclcpp::Node::SharedPtr>("node", client_node_);
       blackboard->set<std::chrono::milliseconds>("server_timeout", default_server_timeout_);
       blackboard->set<std::chrono::milliseconds>("bt_loop_duration", bt_loop_duration_);
+      blackboard->set<std::chrono::milliseconds>(
+        "wait_for_service_timeout",
+        wait_for_service_timeout_);
     }
   } catch (const std::exception & e) {
     RCLCPP_ERROR(logger_, "Exception when loading BT: %s", e.what());
